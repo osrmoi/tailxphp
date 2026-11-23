@@ -42,7 +42,7 @@ $termino = "%$buscar%";
 $stmt = $conexion->prepare("SELECT t.id, t.titulo, t.descripcion, t.categoria_id, t.completada, c.nombre AS categoria, c.color AS categoria_color FROM tareas t LEFT JOIN categorias c ON c.id = t.categoria_id WHERE t.usuario_id = ? AND (? = '' OR t.titulo LIKE ? OR t.descripcion LIKE ?) AND (? = 0 OR t.categoria_id = ?) AND t.completada = ? ORDER BY t.creado_en DESC");
 $stmt->bind_param("isssiii", $usuarioId, $buscar, $termino, $termino, $categoria, $categoria, $completada);
 $stmt->execute();
-$resultado = $stmt->get_result();
+$resultadoTareas = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -110,23 +110,23 @@ $resultado = $stmt->get_result();
         </div>
 
         <div class="space-y-3">
-            <?php if ($resultado->num_rows === 0): ?>
+            <?php if ($resultadoTareas->num_rows === 0): ?>
                 <p class="rounded-xl bg-white p-6 text-center text-slate-500 shadow"><?= ($buscar !== "" || $categoria > 0) ? "No se encontraron tareas." : "No hay tareas en esta lista." ?></p>
             <?php else: ?>
-                <?php while ($fila = $resultado->fetch_assoc()): ?>
-                    <?php if ((int) $fila["id"] === $editar): ?>
+                <?php while ($tarea = $resultadoTareas->fetch_assoc()): ?>
+                    <?php if ((int) $tarea["id"] === $editar): ?>
                         <div class="rounded-xl bg-white p-4 shadow">
                             <form method="POST" action="acciones.php">
-                                <input type="hidden" name="id" value="<?= (int) $fila["id"] ?>">
+                                <input type="hidden" name="id" value="<?= (int) $tarea["id"] ?>">
                                 <input type="hidden" name="buscar" value="<?= h($buscar) ?>">
                                 <input type="hidden" name="categoria" value="<?= $categoria ?>">
                                 <input type="hidden" name="estado" value="<?= h($estado) ?>">
-                                <input type="text" name="titulo" value="<?= h($fila["titulo"]) ?>" class="w-full rounded border border-slate-300 px-3 py-2 font-bold" required>
-                                <textarea name="descripcion" rows="2" class="mt-2 w-full rounded border border-slate-300 px-3 py-2"><?= h($fila["descripcion"]) ?></textarea>
+                                <input type="text" name="titulo" value="<?= h($tarea["titulo"]) ?>" class="w-full rounded border border-slate-300 px-3 py-2 font-bold" required>
+                                <textarea name="descripcion" rows="2" class="mt-2 w-full rounded border border-slate-300 px-3 py-2"><?= h($tarea["descripcion"]) ?></textarea>
                                 <select name="categoria_id" class="mt-2 rounded border border-slate-300 px-3 py-2">
-                                    <option value="0" <?= (int) $fila["categoria_id"] === 0 ? 'selected' : '' ?>>Sin categoría</option>
+                                    <option value="0" <?= (int) $tarea["categoria_id"] === 0 ? 'selected' : '' ?>>Sin categoría</option>
                                     <?php foreach ($categorias as $cat): ?>
-                                        <option value="<?= (int) $cat["id"] ?>" <?= (int) $fila["categoria_id"] === (int) $cat["id"] ? 'selected' : '' ?>><?= h($cat["nombre"]) ?></option>
+                                        <option value="<?= (int) $cat["id"] ?>" <?= (int) $tarea["categoria_id"] === (int) $cat["id"] ? 'selected' : '' ?>><?= h($cat["nombre"]) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                                 <div class="mt-4 flex items-center gap-3">
@@ -139,23 +139,23 @@ $resultado = $stmt->get_result();
                             </form>
                         </div>
                     <?php else: ?>
-                        <div class="flex items-start gap-4 rounded-xl border-l-4 bg-white p-4 shadow" style="border-left-color: <?= h($fila["categoria_color"]) ?>">
-                            <a href="panel.php?<?= h(http_build_query(["editar" => (int) $fila["id"]] + $estadoActual)) ?>" class="min-w-0 flex-1">
-                                <h3 class="font-bold"><?= h($fila["titulo"]) ?></h3>
-                                <?php if ($fila["descripcion"] !== null && $fila["descripcion"] !== ""): ?>
-                                    <p class="mt-1 text-sm text-slate-600 line-clamp-2"><?= h($fila["descripcion"]) ?></p>
+                        <div class="flex items-start gap-4 rounded-xl border-l-4 bg-white p-4 shadow" style="border-left-color: <?= h($tarea["categoria_color"]) ?>">
+                            <a href="panel.php?<?= h(http_build_query(["editar" => (int) $tarea["id"]] + $estadoActual)) ?>" class="min-w-0 flex-1">
+                                <h3 class="font-bold"><?= h($tarea["titulo"]) ?></h3>
+                                <?php if ($tarea["descripcion"] !== null && $tarea["descripcion"] !== ""): ?>
+                                    <p class="mt-1 text-sm text-slate-600 line-clamp-2"><?= h($tarea["descripcion"]) ?></p>
                                 <?php endif; ?>
-                                <?php if ($fila["categoria"] !== null): ?>
-                                    <span class="mt-2 inline-block rounded-full px-2 py-1 text-xs" style="background-color: <?= h($fila["categoria_color"]) ?>; color: #fff"><?= h($fila["categoria"]) ?></span>
+                                <?php if ($tarea["categoria"] !== null): ?>
+                                    <span class="mt-2 inline-block rounded-full px-2 py-1 text-xs" style="background-color: <?= h($tarea["categoria_color"]) ?>; color: #fff"><?= h($tarea["categoria"]) ?></span>
                                 <?php endif; ?>
                             </a>
                             <form method="POST" action="acciones.php" class="shrink-0">
                                 <input type="hidden" name="accion" value="completar">
-                                <input type="hidden" name="id" value="<?= (int) $fila["id"] ?>">
+                                <input type="hidden" name="id" value="<?= (int) $tarea["id"] ?>">
                                 <input type="hidden" name="buscar" value="<?= h($buscar) ?>">
                                 <input type="hidden" name="categoria" value="<?= $categoria ?>">
                                 <input type="hidden" name="estado" value="<?= h($estado) ?>">
-                                <input type="checkbox" onchange="this.form.submit()" class="h-5 w-5 cursor-pointer rounded-full border-slate-300 text-blue-600 focus:ring-blue-600" <?= $fila["completada"] ? 'checked' : '' ?> aria-label="Marcar como completada">
+                                <input type="checkbox" onchange="this.form.submit()" class="h-5 w-5 cursor-pointer rounded-full border-slate-300 text-blue-600 focus:ring-blue-600" <?= $tarea["completada"] ? 'checked' : '' ?> aria-label="Marcar como completada">
                             </form>
                         </div>
                     <?php endif; ?>
@@ -174,7 +174,7 @@ $resultado = $stmt->get_result();
         </a>
     </div>
 <?php
-$resultado->free();
+$resultadoTareas->free();
 $stmt->close();
 $conexion->close();
 ?>
