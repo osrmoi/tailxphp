@@ -31,7 +31,7 @@ $pendientes = (int) $contadores["pendientes"];
 $terminadas = (int) $contadores["terminadas"];
 
 $categorias = [];
-$resultadoCategorias = $conexion->query("SELECT id, nombre FROM categorias ORDER BY nombre");
+$resultadoCategorias = $conexion->query("SELECT id, nombre, color FROM categorias ORDER BY nombre");
 while ($filaCategoria = $resultadoCategorias->fetch_assoc()) {
     $categorias[] = $filaCategoria;
 }
@@ -39,7 +39,7 @@ $resultadoCategorias->free();
 
 $completada = $estado === "terminadas" ? 1 : 0;
 $termino = "%$buscar%";
-$stmt = $conexion->prepare("SELECT t.id, t.titulo, t.descripcion, t.categoria_id, t.completada, c.nombre AS categoria FROM tareas t LEFT JOIN categorias c ON c.id = t.categoria_id WHERE t.usuario_id = ? AND (? = '' OR t.titulo LIKE ? OR t.descripcion LIKE ?) AND (? = 0 OR t.categoria_id = ?) AND t.completada = ? ORDER BY t.creado_en DESC");
+$stmt = $conexion->prepare("SELECT t.id, t.titulo, t.descripcion, t.categoria_id, t.completada, c.nombre AS categoria, c.color AS categoria_color FROM tareas t LEFT JOIN categorias c ON c.id = t.categoria_id WHERE t.usuario_id = ? AND (? = '' OR t.titulo LIKE ? OR t.descripcion LIKE ?) AND (? = 0 OR t.categoria_id = ?) AND t.completada = ? ORDER BY t.creado_en DESC");
 $stmt->bind_param("isssiii", $usuarioId, $buscar, $termino, $termino, $categoria, $categoria, $completada);
 $stmt->execute();
 $resultado = $stmt->get_result();
@@ -139,14 +139,14 @@ $resultado = $stmt->get_result();
                             </form>
                         </div>
                     <?php else: ?>
-                        <div class="flex items-start gap-4 rounded-xl bg-white p-4 shadow">
+                        <div class="flex items-start gap-4 rounded-xl border-l-4 bg-white p-4 shadow" style="border-left-color: <?= h($fila["categoria_color"]) ?>">
                             <a href="panel.php?<?= h(http_build_query(["editar" => (int) $fila["id"]] + $estadoActual)) ?>" class="min-w-0 flex-1">
                                 <h3 class="font-bold"><?= h($fila["titulo"]) ?></h3>
                                 <?php if ($fila["descripcion"] !== null && $fila["descripcion"] !== ""): ?>
                                     <p class="mt-1 text-sm text-slate-600 line-clamp-2"><?= h($fila["descripcion"]) ?></p>
                                 <?php endif; ?>
                                 <?php if ($fila["categoria"] !== null): ?>
-                                    <span class="mt-2 inline-block rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600"><?= h($fila["categoria"]) ?></span>
+                                    <span class="mt-2 inline-block rounded-full px-2 py-1 text-xs" style="background-color: <?= h($fila["categoria_color"]) ?>; color: #fff"><?= h($fila["categoria"]) ?></span>
                                 <?php endif; ?>
                             </a>
                             <form method="POST" action="acciones.php" class="shrink-0">
