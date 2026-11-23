@@ -56,7 +56,7 @@ $resultado = $stmt->get_result();
 <body class="min-h-screen bg-slate-50 pb-24 text-slate-800">
     <div class="mx-auto max-w-3xl px-4 py-8">
         <header class="mb-6">
-            <h1 class="text-3xl font-bold">Bienvenido, <?= h($_SESSION['usuario']) ?></h1>
+            <h1 class="text-3xl font-bold">Hola, <?= h($_SESSION['usuario']) ?></h1>
             <p class="mt-1 text-slate-500">Tienes <span class="font-semibold text-slate-800"><?= $pendientes ?></span> tareas pendientes.</p>
         </header>
 
@@ -101,6 +101,8 @@ $resultado = $stmt->get_result();
                 </form>
             </div>
         <?php endif; ?>
+
+        <p class="mb-2 text-sm text-slate-500 text-center">Haz clic sobre la tarea para editarla</p>
 
         <div class="mb-4 flex gap-2 border-b border-slate-200">
             <a href="<?= h($urlPendientes) ?>" class="px-4 py-2 <?= $estado === 'pendientes' ? 'border-b-2 border-blue-600 font-semibold text-blue-600' : 'text-slate-500 hover:text-slate-700' ?>">Pendientes (<?= $pendientes ?>)</a>
