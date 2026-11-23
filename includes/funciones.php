@@ -10,5 +10,4 @@ function redirect($url) {
 
 function olvidar_preferencias() {
     setcookie("usuario_recordado", "", time() - 3600, "/");
-    setcookie("categoria_recordada", "", time() - 3600, "/");
 }

@@ -6,28 +6,11 @@ require_once "includes/conexion.php";
 
 $usuarioId = (int) $_SESSION['usuario_id'];
 
-$categoriaCookie = (int) ($_COOKIE['categoria_recordada'] ?? 0);
-if ($categoriaCookie > 0) {
-    $stmt = $conexion->prepare("SELECT id FROM categorias WHERE id = ?");
-    $stmt->bind_param("i", $categoriaCookie);
-    $stmt->execute();
-    $stmt->store_result();
-    if ($stmt->num_rows === 0) {
-        $categoriaCookie = 0;
-        setcookie("categoria_recordada", "", time() - 3600, "/");
-    }
-    $stmt->close();
-}
-
-$categoria = isset($_GET['categoria']) ? (int) $_GET['categoria'] : $categoriaCookie;
+$categoria = (int) ($_GET['categoria'] ?? 0);
 $buscar = trim($_GET['buscar'] ?? "");
 $editar = (int) ($_GET['editar'] ?? 0);
 $estado = $_GET['estado'] ?? "pendientes";
 $estado = $estado === "terminadas" ? "terminadas" : "pendientes";
-
-if (isset($_GET['categoria']) && isset($_COOKIE['usuario_recordado'])) {
-    setcookie("categoria_recordada", (string) $categoria, time() + 7*24*3600, "/");
-}
 
 $estadoActual = [
     "buscar" => $buscar,
@@ -35,9 +18,9 @@ $estadoActual = [
     "estado" => $estado
 ];
 $volver = "panel.php?" . http_build_query($estadoActual);
-$urlPendientes = "panel.php?" . http_build_query(["buscar" => $buscar, "categoria" => $categoria, "estado" => "pendientes"]);
-$urlTerminadas = "panel.php?" . http_build_query(["buscar" => $buscar, "categoria" => $categoria, "estado" => "terminadas"]);
-$urlLimpiar = "panel.php?" . http_build_query(["buscar" => "", "categoria" => 0, "estado" => $estado]);
+$urlPendientes = "panel.php?" . http_build_query(["estado" => "pendientes"]);
+$urlTerminadas = "panel.php?" . http_build_query(["estado" => "terminadas"]);
+$urlLimpiar = "panel.php?" . http_build_query(["estado" => $estado]);
 
 $stmt = $conexion->prepare("SELECT SUM(completada = 0) AS pendientes, SUM(completada = 1) AS terminadas FROM tareas WHERE usuario_id = ?");
 $stmt->bind_param("i", $usuarioId);
