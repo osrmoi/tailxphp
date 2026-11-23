@@ -22,19 +22,30 @@ if ($categoriaCookie > 0) {
 $categoria = isset($_GET['categoria']) ? (int) $_GET['categoria'] : $categoriaCookie;
 $buscar = trim($_GET['buscar'] ?? "");
 $editar = (int) ($_GET['editar'] ?? 0);
+$estado = $_GET['estado'] ?? "pendientes";
+$estado = $estado === "terminadas" ? "terminadas" : "pendientes";
 
 if (isset($_GET['categoria']) && isset($_COOKIE['usuario_recordado'])) {
     setcookie("categoria_recordada", (string) $categoria, time() + 7*24*3600, "/");
 }
 
-$estado = ["buscar" => $buscar, "categoria" => $categoria];
-$volver = "panel.php?" . http_build_query($estado);
+$estadoActual = [
+    "buscar" => $buscar,
+    "categoria" => $categoria,
+    "estado" => $estado
+];
+$volver = "panel.php?" . http_build_query($estadoActual);
+$urlPendientes = "panel.php?" . http_build_query(["buscar" => $buscar, "categoria" => $categoria, "estado" => "pendientes"]);
+$urlTerminadas = "panel.php?" . http_build_query(["buscar" => $buscar, "categoria" => $categoria, "estado" => "terminadas"]);
+$urlLimpiar = "panel.php?" . http_build_query(["buscar" => "", "categoria" => 0, "estado" => $estado]);
 
-$stmt = $conexion->prepare("SELECT COUNT(*) AS total, SUM(completada = 0) AS pendientes, SUM(completada = 1) AS completadas FROM tareas WHERE usuario_id = ?");
+$stmt = $conexion->prepare("SELECT SUM(completada = 0) AS pendientes, SUM(completada = 1) AS terminadas FROM tareas WHERE usuario_id = ?");
 $stmt->bind_param("i", $usuarioId);
 $stmt->execute();
 $contadores = $stmt->get_result()->fetch_assoc();
 $stmt->close();
+$pendientes = (int) $contadores["pendientes"];
+$terminadas = (int) $contadores["terminadas"];
 
 $categorias = [];
 $resultadoCategorias = $conexion->query("SELECT id, nombre FROM categorias ORDER BY nombre");
@@ -43,9 +54,10 @@ while ($filaCategoria = $resultadoCategorias->fetch_assoc()) {
 }
 $resultadoCategorias->free();
 
+$completada = $estado === "terminadas" ? 1 : 0;
 $termino = "%$buscar%";
-$stmt = $conexion->prepare("SELECT t.id, t.titulo, t.descripcion, t.categoria_id, t.completada, c.nombre AS categoria FROM tareas t LEFT JOIN categorias c ON c.id = t.categoria_id WHERE t.usuario_id = ? AND (? = '' OR t.titulo LIKE ? OR t.descripcion LIKE ?) AND (? = 0 OR t.categoria_id = ?) ORDER BY t.completada ASC, t.creado_en DESC");
-$stmt->bind_param("isssii", $usuarioId, $buscar, $termino, $termino, $categoria, $categoria);
+$stmt = $conexion->prepare("SELECT t.id, t.titulo, t.descripcion, t.categoria_id, t.completada, c.nombre AS categoria FROM tareas t LEFT JOIN categorias c ON c.id = t.categoria_id WHERE t.usuario_id = ? AND (? = '' OR t.titulo LIKE ? OR t.descripcion LIKE ?) AND (? = 0 OR t.categoria_id = ?) AND t.completada = ? ORDER BY t.creado_en DESC");
+$stmt->bind_param("isssiii", $usuarioId, $buscar, $termino, $termino, $categoria, $categoria, $completada);
 $stmt->execute();
 $resultado = $stmt->get_result();
 ?>
@@ -54,118 +66,137 @@ $resultado = $stmt->get_result();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <title>Panel de tareas</title>
 </head>
-<body>
-    <h1>Bienvenido, <?= h($_SESSION['usuario']) ?></h1>
-    <p><a href="logout.php">Cerrar sesión</a></p>
+<body class="min-h-screen bg-slate-50 pb-24 text-slate-800">
+    <div class="mx-auto max-w-3xl px-4 py-8">
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold">Bienvenido, <?= h($_SESSION['usuario']) ?></h1>
+            <p class="mt-1 text-slate-500">Tienes <span class="font-semibold text-slate-800"><?= $pendientes ?></span> tareas pendientes.</p>
+        </header>
 
-    <h2>Resumen</h2>
-    <p>Total: <?= (int) $contadores["total"] ?> | Pendientes: <?= (int) $contadores["pendientes"] ?> | Completadas: <?= (int) $contadores["completadas"] ?></p>
+        <form method="GET" action="panel.php" class="mb-6 flex flex-wrap items-end gap-3 rounded-xl bg-white p-4 shadow">
+            <input type="hidden" name="estado" value="<?= h($estado) ?>">
+            <div class="min-w-[180px] flex-1">
+                <label for="buscar" class="mb-1 block text-sm font-medium">Buscar</label>
+                <input type="text" id="buscar" name="buscar" value="<?= h($buscar) ?>" placeholder="Título o descripción" class="w-full rounded border border-slate-300 px-3 py-2">
+            </div>
+            <div>
+                <label for="categoria" class="mb-1 block text-sm font-medium">Categoría</label>
+                <select id="categoria" name="categoria" class="rounded border border-slate-300 px-3 py-2">
+                    <option value="0" <?= $categoria === 0 ? 'selected' : '' ?>>Todas</option>
+                    <?php foreach ($categorias as $cat): ?>
+                        <option value="<?= (int) $cat["id"] ?>" <?= $categoria === (int) $cat["id"] ? 'selected' : '' ?>><?= h($cat["nombre"]) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <button type="submit" class="rounded bg-slate-800 px-4 py-2 text-white hover:bg-slate-700">Buscar</button>
+            <a href="<?= h($urlLimpiar) ?>" class="px-2 py-2 text-sm text-slate-500 hover:text-slate-700">Limpiar</a>
+            <?php if ($estado === "pendientes"): ?>
+                <button type="button" onclick="toggleNueva()" class="ml-auto rounded-full bg-blue-600 p-3 text-white shadow hover:bg-blue-700" title="Nueva tarea">
+                    <i data-lucide="plus" class="h-5 w-5"></i>
+                </button>
+            <?php endif; ?>
+        </form>
 
-    <h2>Buscar y filtrar</h2>
-    <form method="GET" action="panel.php">
-        <label for="buscar">Buscar:</label>
-        <input type="text" id="buscar" name="buscar" value="<?= h($buscar) ?>" placeholder="Título o descripción">
-        <label for="categoria">Categoría:</label>
-        <select id="categoria" name="categoria">
-            <option value="0" <?= $categoria === 0 ? 'selected' : '' ?>>Todas</option>
-            <?php foreach ($categorias as $cat): ?>
-                <option value="<?= (int) $cat["id"] ?>" <?= $categoria === (int) $cat["id"] ? 'selected' : '' ?>><?= h($cat["nombre"]) ?></option>
-            <?php endforeach; ?>
-        </select>
-        <button type="submit">Buscar</button>
-        <a href="panel.php?buscar=&amp;categoria=0">Limpiar</a>
-    </form>
+        <?php if ($estado === "pendientes"): ?>
+            <div id="nueva-tarea" class="mb-6 hidden rounded-xl bg-white p-4 shadow">
+                <h2 class="mb-3 font-semibold">Nueva tarea</h2>
+                <form method="POST" action="acciones.php">
+                    <input type="hidden" name="accion" value="crear">
+                    <input type="hidden" name="buscar" value="<?= h($buscar) ?>">
+                    <input type="hidden" name="categoria" value="<?= $categoria ?>">
+                    <input type="hidden" name="estado" value="<?= h($estado) ?>">
+                    <input type="text" name="titulo" placeholder="Título" class="w-full rounded border border-slate-300 px-3 py-2" required>
+                    <textarea name="descripcion" placeholder="Descripción" rows="2" class="mt-2 w-full rounded border border-slate-300 px-3 py-2"></textarea>
+                    <div class="mt-2 flex flex-wrap items-center gap-3">
+                        <select name="categoria_id" class="rounded border border-slate-300 px-3 py-2">
+                            <option value="0">Sin categoría</option>
+                            <?php foreach ($categorias as $cat): ?>
+                                <option value="<?= (int) $cat["id"] ?>"><?= h($cat["nombre"]) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        <?php endif; ?>
 
-    <h2>Nueva tarea</h2>
-    <form method="POST" action="acciones.php">
-        <input type="hidden" name="accion" value="crear">
-        <input type="hidden" name="buscar" value="<?= h($buscar) ?>">
-        <input type="hidden" name="categoria" value="<?= $categoria ?>">
-        <label>Título:<br><input type="text" name="titulo" required></label><br><br>
-        <label>Descripción:<br><textarea name="descripcion"></textarea></label><br><br>
-        <label>Categoría:<br>
-            <select name="categoria_id">
-                <option value="0">Sin categoría</option>
-                <?php foreach ($categorias as $cat): ?>
-                    <option value="<?= (int) $cat["id"] ?>"><?= h($cat["nombre"]) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </label><br><br>
-        <button type="submit">Agregar tarea</button>
-    </form>
+        <div class="mb-4 flex gap-2 border-b border-slate-200">
+            <a href="<?= h($urlPendientes) ?>" class="px-4 py-2 <?= $estado === 'pendientes' ? 'border-b-2 border-blue-600 font-semibold text-blue-600' : 'text-slate-500 hover:text-slate-700' ?>">Pendientes (<?= $pendientes ?>)</a>
+            <a href="<?= h($urlTerminadas) ?>" class="px-4 py-2 <?= $estado === 'terminadas' ? 'border-b-2 border-blue-600 font-semibold text-blue-600' : 'text-slate-500 hover:text-slate-700' ?>">Terminadas (<?= $terminadas ?>)</a>
+        </div>
 
-    <h2>Tareas</h2>
-    <table border="1" cellpadding="10">
-        <tr>
-            <th>Título</th>
-            <th>Descripción</th>
-            <th>Categoría</th>
-            <th>Completada</th>
-            <th>Acciones</th>
-        </tr>
-        <?php if ($resultado->num_rows === 0): ?>
-            <tr>
-                <td colspan="5"><?= ($buscar !== "" || $categoria > 0) ? "No se encontraron tareas." : "No hay tareas registradas." ?></td>
-            </tr>
-        <?php else: ?>
-            <?php while ($fila = $resultado->fetch_assoc()): ?>
-                <?php if ((int) $fila["id"] === $editar): ?>
-                    <tr>
-                        <td colspan="5">
+        <div class="space-y-3">
+            <?php if ($resultado->num_rows === 0): ?>
+                <p class="rounded-xl bg-white p-6 text-center text-slate-500 shadow"><?= ($buscar !== "" || $categoria > 0) ? "No se encontraron tareas." : "No hay tareas en esta lista." ?></p>
+            <?php else: ?>
+                <?php while ($fila = $resultado->fetch_assoc()): ?>
+                    <?php if ((int) $fila["id"] === $editar): ?>
+                        <div class="rounded-xl bg-white p-4 shadow">
                             <form method="POST" action="acciones.php">
-                                <input type="hidden" name="accion" value="actualizar">
                                 <input type="hidden" name="id" value="<?= (int) $fila["id"] ?>">
                                 <input type="hidden" name="buscar" value="<?= h($buscar) ?>">
                                 <input type="hidden" name="categoria" value="<?= $categoria ?>">
-                                <label>Título:<br><input type="text" name="titulo" value="<?= h($fila["titulo"]) ?>" required></label><br><br>
-                                <label>Descripción:<br><textarea name="descripcion"><?= h($fila["descripcion"]) ?></textarea></label><br><br>
-                                <label>Categoría:<br>
-                                    <select name="categoria_id">
-                                        <option value="0" <?= (int) $fila["categoria_id"] === 0 ? 'selected' : '' ?>>Sin categoría</option>
-                                        <?php foreach ($categorias as $cat): ?>
-                                            <option value="<?= (int) $cat["id"] ?>" <?= (int) $fila["categoria_id"] === (int) $cat["id"] ? 'selected' : '' ?>><?= h($cat["nombre"]) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </label><br><br>
-                                <button type="submit">Guardar</button>
-                                <a href="<?= h($volver) ?>">Cancelar</a>
+                                <input type="hidden" name="estado" value="<?= h($estado) ?>">
+                                <input type="text" name="titulo" value="<?= h($fila["titulo"]) ?>" class="w-full rounded border border-slate-300 px-3 py-2 font-bold" required>
+                                <textarea name="descripcion" rows="2" class="mt-2 w-full rounded border border-slate-300 px-3 py-2"><?= h($fila["descripcion"]) ?></textarea>
+                                <select name="categoria_id" class="mt-2 rounded border border-slate-300 px-3 py-2">
+                                    <option value="0" <?= (int) $fila["categoria_id"] === 0 ? 'selected' : '' ?>>Sin categoría</option>
+                                    <?php foreach ($categorias as $cat): ?>
+                                        <option value="<?= (int) $cat["id"] ?>" <?= (int) $fila["categoria_id"] === (int) $cat["id"] ? 'selected' : '' ?>><?= h($cat["nombre"]) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="mt-4 flex items-center gap-3">
+                                    <button type="submit" name="accion" value="actualizar" class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">Guardar</button>
+                                    <a href="<?= h($volver) ?>" class="text-sm text-slate-500 hover:text-slate-700">Cancelar</a>
+                                    <button type="submit" name="accion" value="eliminar" onclick="return confirm('¿Eliminar esta tarea?')" class="ml-auto text-red-600 hover:text-red-800" title="Eliminar">
+                                        <i data-lucide="trash-2" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
                             </form>
-                        </td>
-                    </tr>
-                <?php else: ?>
-                    <tr>
-                        <td><?= h($fila["titulo"]) ?></td>
-                        <td><?= h($fila["descripcion"]) ?></td>
-                        <td><?= $fila["categoria"] !== null ? h($fila["categoria"]) : "Sin categoría" ?></td>
-                        <td><?= $fila["completada"] ? "Sí" : "No" ?></td>
-                        <td>
-                            <a href="panel.php?<?= h(http_build_query(["editar" => (int) $fila["id"]] + $estado)) ?>">Editar</a>
-                            <form method="POST" action="acciones.php" style="display:inline">
+                        </div>
+                    <?php else: ?>
+                        <div class="flex items-start gap-4 rounded-xl bg-white p-4 shadow">
+                            <a href="panel.php?<?= h(http_build_query(["editar" => (int) $fila["id"]] + $estadoActual)) ?>" class="min-w-0 flex-1">
+                                <h3 class="font-bold"><?= h($fila["titulo"]) ?></h3>
+                                <?php if ($fila["descripcion"] !== null && $fila["descripcion"] !== ""): ?>
+                                    <p class="mt-1 text-sm text-slate-600 line-clamp-2"><?= h($fila["descripcion"]) ?></p>
+                                <?php endif; ?>
+                                <?php if ($fila["categoria"] !== null): ?>
+                                    <span class="mt-2 inline-block rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600"><?= h($fila["categoria"]) ?></span>
+                                <?php endif; ?>
+                            </a>
+                            <form method="POST" action="acciones.php" class="shrink-0">
                                 <input type="hidden" name="accion" value="completar">
                                 <input type="hidden" name="id" value="<?= (int) $fila["id"] ?>">
                                 <input type="hidden" name="buscar" value="<?= h($buscar) ?>">
                                 <input type="hidden" name="categoria" value="<?= $categoria ?>">
-                                <button type="submit">Completar</button>
+                                <input type="hidden" name="estado" value="<?= h($estado) ?>">
+                                <input type="checkbox" onchange="this.form.submit()" class="h-5 w-5 cursor-pointer rounded-full border-slate-300 text-blue-600 focus:ring-blue-600" <?= $fila["completada"] ? 'checked' : '' ?> aria-label="Marcar como completada">
                             </form>
-                            <form method="POST" action="acciones.php" style="display:inline">
-                                <input type="hidden" name="accion" value="eliminar">
-                                <input type="hidden" name="id" value="<?= (int) $fila["id"] ?>">
-                                <input type="hidden" name="buscar" value="<?= h($buscar) ?>">
-                                <input type="hidden" name="categoria" value="<?= $categoria ?>">
-                                <button type="submit" onclick="return confirm('¿Eliminar esta tarea?')">Eliminar</button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endif; ?>
-            <?php endwhile; ?>
-        <?php endif; ?>
-    </table>
+                        </div>
+                    <?php endif; ?>
+                <?php endwhile; ?>
+            <?php endif; ?>
+        </div>
+
+        <a href="logout.php" class="fixed bottom-4 left-4 z-50 rounded-full bg-white p-3 text-slate-600 shadow-lg hover:text-red-600" title="Cerrar sesión">
+            <i data-lucide="door-open" class="h-5 w-5"></i>
+        </a>
+    </div>
 <?php
 $resultado->free();
 $stmt->close();
 $conexion->close();
 ?>
+    <script>
+        function toggleNueva() {
+            document.getElementById('nueva-tarea').classList.toggle('hidden');
+        }
+        lucide.createIcons();
+    </script>
 </body>
 </html>

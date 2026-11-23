@@ -9,6 +9,8 @@ $accion = $_POST["accion"] ?? "";
 $id = (int) ($_POST["id"] ?? 0);
 $buscar = trim($_POST["buscar"] ?? "");
 $categoriaFiltro = (int) ($_POST["categoria"] ?? 0);
+$estado = $_POST["estado"] ?? "pendientes";
+$estado = $estado === "terminadas" ? "terminadas" : "pendientes";
 
 if ($accion === "crear" || $accion === "actualizar") {
     $titulo = trim($_POST["titulo"] ?? "");
@@ -51,4 +53,8 @@ if ($accion === "crear" || $accion === "actualizar") {
 }
 
 $conexion->close();
-redirect("panel.php?" . http_build_query(["buscar" => $buscar, "categoria" => $categoriaFiltro]));
+redirect("panel.php?" . http_build_query([
+    "buscar" => $buscar,
+    "categoria" => $categoriaFiltro,
+    "estado" => $estado
+]));

@@ -4,7 +4,6 @@ require_once "includes/funciones.php";
 require_once "includes/conexion.php";
 
 $mensaje = "";
-$color = "red";
 $usuario = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -31,9 +30,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt = $conexion->prepare("INSERT INTO usuarios (usuario, password) VALUES (?, ?)");
             $stmt->bind_param("ss", $usuario, $hash);
             if ($stmt->execute()) {
-                $mensaje = "Usuario registrado correctamente. Ya puedes iniciar sesión.";
-                $color = "green";
-                $usuario = "";
+                $stmt->close();
+                $conexion->close();
+                redirect("index.php?registro=ok");
             } else {
                 $mensaje = "Error al registrar: " . $stmt->error;
             }
@@ -48,20 +47,30 @@ $conexion->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <title>Registro</title>
 </head>
-<body>
-    <h1>Registro de usuario</h1>
-    <?php if ($mensaje !== ""): ?>
-        <p style="color:<?= $color ?>"><?= h($mensaje) ?></p>
-    <?php endif; ?>
-    <form method="POST" action="registro.php">
-        <label>Usuario:<br><input type="text" name="usuario" value="<?= h($usuario) ?>" required></label><br><br>
-        <label>Contraseña:<br><input type="password" name="password" required></label><br><br>
-        <label>Confirmación de contraseña:<br><input type="password" name="confirmacion" required></label><br><br>
-        <button type="submit">Registrarse</button>
-    </form>
-    <br>
-    <a href="index.php">Volver al inicio de sesión</a>
+<body class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-xl bg-white p-8 shadow">
+        <h1 class="mb-6 text-2xl font-bold">Registro de usuario</h1>
+        <?php if ($mensaje !== ""): ?>
+            <p class="mb-4 text-sm text-red-600"><?= h($mensaje) ?></p>
+        <?php endif; ?>
+        <form method="POST" action="registro.php">
+            <label class="block text-sm font-medium">Usuario
+                <input type="text" name="usuario" value="<?= h($usuario) ?>" class="mt-1 w-full rounded border border-slate-300 px-3 py-2" required>
+            </label>
+            <label class="mt-4 block text-sm font-medium">Contraseña
+                <input type="password" name="password" class="mt-1 w-full rounded border border-slate-300 px-3 py-2" required>
+            </label>
+            <label class="mt-4 block text-sm font-medium">Confirmación de contraseña
+                <input type="password" name="confirmacion" class="mt-1 w-full rounded border border-slate-300 px-3 py-2" required>
+            </label>
+            <button type="submit" class="mt-6 w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">Registrarse</button>
+        </form>
+        <a href="index.php" class="mt-4 block text-center text-sm text-slate-500 hover:text-slate-700">Volver al inicio de sesión</a>
+    </div>
+    <script>lucide.createIcons();</script>
 </body>
 </html>
