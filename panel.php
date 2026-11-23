@@ -77,11 +77,6 @@ $resultado = $stmt->get_result();
             </div>
             <button type="submit" class="rounded bg-slate-800 px-4 py-2 text-white hover:bg-slate-700">Buscar</button>
             <a href="<?= h($urlLimpiar) ?>" class="px-2 py-2 text-sm text-slate-500 hover:text-slate-700">Limpiar</a>
-            <?php if ($estado === "pendientes"): ?>
-                <button type="button" onclick="toggleNueva()" class="ml-auto rounded-full bg-blue-600 p-3 text-white shadow hover:bg-blue-700" title="Nueva tarea">
-                    <i data-lucide="plus" class="h-5 w-5"></i>
-                </button>
-            <?php endif; ?>
         </form>
 
         <?php if ($estado === "pendientes"): ?>
@@ -165,6 +160,12 @@ $resultado = $stmt->get_result();
                 <?php endwhile; ?>
             <?php endif; ?>
         </div>
+
+        <?php if ($estado === "pendientes"): ?>
+            <button type="button" onclick="toggleNueva()" class="fixed bottom-4 right-4 z-50 rounded-full bg-blue-600 p-4 text-white shadow-lg hover:bg-blue-700" title="Nueva tarea">
+                <i data-lucide="plus" class="h-5 w-5"></i>
+            </button>
+        <?php endif; ?>
 
         <a href="logout.php" class="fixed bottom-4 left-4 z-50 rounded-full bg-white p-3 text-slate-600 shadow-lg hover:text-red-600" title="Cerrar sesión">
             <i data-lucide="door-open" class="h-5 w-5"></i>
