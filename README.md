@@ -329,10 +329,10 @@ El operador `+` de arrays añade `editar` sin sobrescribir las claves existentes
 ## 11. Los cierres: `free()`, `close()` y `store_result()`
 
 - **`$resultado->free()`** libera la memoria usada por un `mysqli_result`. En `panel.php` se llama tanto para `$resultadoCategorias` como para `$resultadoTareas` cuando ya se terminó de recorrer. Es una buena práctica, sobre todo en resultados grandes, y evita dejar resultados pendientes antes de emitir nuevas consultas (los resultados no almacenados en buffer pueden dar el error *"Commands out of sync"* si no se consumen o se liberan).
-- **`$stmt->close()`** cierra cada sentencia preparada y libera sus recursos.
+- **`$consulta->close()`** cierra cada sentencia preparada y libera sus recursos.
 - **`$conexion->close()`** cierra la conexión a MySQL al final de cada archivo.
-- **`$stmt->store_result()`** transfiere el resultado a memoria para poder usar `$stmt->num_rows` inmediatamente. Se usa en `registro.php` (comprobar usuario duplicado) y en `acciones.php` (validar que la categoría existe), donde solo interesa la cantidad de filas, no los datos.
-- **`$stmt->get_result()`** devuelve un `mysqli_result` para recorrer con `fetch_assoc()` (panel, contadores). **`$stmt->bind_result()`** enlaza columnas directamente a variables (login: `id` y `hash`).
+- **`$consulta->store_result()`** transfiere el resultado a memoria para poder usar `$consulta->num_rows` inmediatamente. Se usa en `registro.php` (comprobar usuario duplicado) y en `acciones.php` (validar que la categoría existe), donde solo interesa la cantidad de filas, no los datos.
+- **`$consulta->get_result()`** devuelve un `mysqli_result` para recorrer con `fetch_assoc()` (panel, contadores). **`$consulta->bind_result()`** enlaza columnas directamente a variables (login: `id` y `hash`).
 
 ---
 

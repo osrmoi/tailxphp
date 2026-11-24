@@ -13,23 +13,23 @@ $categorias = [
     ["Ocio", "Tiempo libre y entretenimiento", "#4f46e5"],
 ];
 
-$stmt = $conexion->prepare("INSERT INTO categorias (nombre, descripcion, color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE descripcion = VALUES(descripcion), color = VALUES(color)");
+$consulta = $conexion->prepare("INSERT INTO categorias (nombre, descripcion, color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE descripcion = VALUES(descripcion), color = VALUES(color)");
 foreach ($categorias as $categoria) {
     $nombre = $categoria[0];
     $descripcion = $categoria[1];
     $color = $categoria[2];
-    $stmt->bind_param("sss", $nombre, $descripcion, $color);
-    $stmt->execute();
+    $consulta->bind_param("sss", $nombre, $descripcion, $color);
+    $consulta->execute();
 }
-$stmt->close();
+$consulta->close();
 
 $hash = password_hash("1234", PASSWORD_DEFAULT);
-$stmt = $conexion->prepare("INSERT IGNORE INTO usuarios (usuario, password) VALUES (?, ?)");
+$consulta = $conexion->prepare("INSERT IGNORE INTO usuarios (usuario, password) VALUES (?, ?)");
 foreach (["user1", "user2"] as $usuario) {
-    $stmt->bind_param("ss", $usuario, $hash);
-    $stmt->execute();
+    $consulta->bind_param("ss", $usuario, $hash);
+    $consulta->execute();
 }
-$stmt->close();
+$consulta->close();
 
 $conexion->close();
 

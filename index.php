@@ -24,12 +24,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $usuario = trim($_POST["usuario"] ?? "");
     $password = $_POST["password"] ?? "";
 
-    $stmt = $conexion->prepare("SELECT id, password FROM usuarios WHERE usuario = ?");
-    $stmt->bind_param("s", $usuario);
-    $stmt->execute();
-    $stmt->bind_result($id, $hash);
-    $stmt->fetch();
-    $stmt->close();
+    $consulta = $conexion->prepare("SELECT id, password FROM usuarios WHERE usuario = ?");
+    $consulta->bind_param("s", $usuario);
+    $consulta->execute();
+    $consulta->bind_result($id, $hash);
+    $consulta->fetch();
+    $consulta->close();
 
     if ($hash && password_verify($password, $hash)) {
         $_SESSION['usuario'] = $usuario;

@@ -19,37 +19,37 @@ if ($accion === "crear" || $accion === "actualizar") {
     $categoriaId = $categoriaTarea > 0 ? $categoriaTarea : null;
 
     if ($categoriaId !== null) {
-        $stmt = $conexion->prepare("SELECT id FROM categorias WHERE id = ?");
-        $stmt->bind_param("i", $categoriaId);
-        $stmt->execute();
-        $stmt->store_result();
-        if ($stmt->num_rows === 0) {
+        $consulta = $conexion->prepare("SELECT id FROM categorias WHERE id = ?");
+        $consulta->bind_param("i", $categoriaId);
+        $consulta->execute();
+        $consulta->store_result();
+        if ($consulta->num_rows === 0) {
             $categoriaId = null;
         }
-        $stmt->close();
+        $consulta->close();
     }
 
     if ($titulo !== "") {
         if ($accion === "crear") {
-            $stmt = $conexion->prepare("INSERT INTO tareas (usuario_id, categoria_id, titulo, descripcion, completada) VALUES (?, ?, ?, ?, 0)");
-            $stmt->bind_param("iiss", $usuarioId, $categoriaId, $titulo, $descripcion);
+            $consulta = $conexion->prepare("INSERT INTO tareas (usuario_id, categoria_id, titulo, descripcion, completada) VALUES (?, ?, ?, ?, 0)");
+            $consulta->bind_param("iiss", $usuarioId, $categoriaId, $titulo, $descripcion);
         } else {
-            $stmt = $conexion->prepare("UPDATE tareas SET titulo = ?, descripcion = ?, categoria_id = ? WHERE id = ? AND usuario_id = ?");
-            $stmt->bind_param("ssiii", $titulo, $descripcion, $categoriaId, $id, $usuarioId);
+            $consulta = $conexion->prepare("UPDATE tareas SET titulo = ?, descripcion = ?, categoria_id = ? WHERE id = ? AND usuario_id = ?");
+            $consulta->bind_param("ssiii", $titulo, $descripcion, $categoriaId, $id, $usuarioId);
         }
-        $stmt->execute();
-        $stmt->close();
+        $consulta->execute();
+        $consulta->close();
     }
 } elseif ($accion === "eliminar") {
-    $stmt = $conexion->prepare("DELETE FROM tareas WHERE id = ? AND usuario_id = ?");
-    $stmt->bind_param("ii", $id, $usuarioId);
-    $stmt->execute();
-    $stmt->close();
+    $consulta = $conexion->prepare("DELETE FROM tareas WHERE id = ? AND usuario_id = ?");
+    $consulta->bind_param("ii", $id, $usuarioId);
+    $consulta->execute();
+    $consulta->close();
 } elseif ($accion === "completar") {
-    $stmt = $conexion->prepare("UPDATE tareas SET completada = NOT completada WHERE id = ? AND usuario_id = ?");
-    $stmt->bind_param("ii", $id, $usuarioId);
-    $stmt->execute();
-    $stmt->close();
+    $consulta = $conexion->prepare("UPDATE tareas SET completada = NOT completada WHERE id = ? AND usuario_id = ?");
+    $consulta->bind_param("ii", $id, $usuarioId);
+    $consulta->execute();
+    $consulta->close();
 }
 
 $conexion->close();

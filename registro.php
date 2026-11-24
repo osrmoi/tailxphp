@@ -16,27 +16,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     } elseif ($password !== $confirmacion) {
         $mensaje = "Las contraseñas no coinciden.";
     } else {
-        $stmt = $conexion->prepare("SELECT id FROM usuarios WHERE usuario = ?");
-        $stmt->bind_param("s", $usuario);
-        $stmt->execute();
-        $stmt->store_result();
-        $existe = $stmt->num_rows > 0;
-        $stmt->close();
+        $consulta = $conexion->prepare("SELECT id FROM usuarios WHERE usuario = ?");
+        $consulta->bind_param("s", $usuario);
+        $consulta->execute();
+        $consulta->store_result();
+        $existe = $consulta->num_rows > 0;
+        $consulta->close();
 
         if ($existe) {
             $mensaje = "Ese usuario ya está registrado.";
         } else {
             $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $conexion->prepare("INSERT INTO usuarios (usuario, password) VALUES (?, ?)");
-            $stmt->bind_param("ss", $usuario, $hash);
-            if ($stmt->execute()) {
-                $stmt->close();
+            $consulta = $conexion->prepare("INSERT INTO usuarios (usuario, password) VALUES (?, ?)");
+            $consulta->bind_param("ss", $usuario, $hash);
+            if ($consulta->execute()) {
+                $consulta->close();
                 $conexion->close();
                 redirect("index.php?registro=ok");
             } else {
-                $mensaje = "Error al registrar: " . $stmt->error;
+                $mensaje = "Error al registrar: " . $consulta->error;
             }
-            $stmt->close();
+            $consulta->close();
         }
     }
 }

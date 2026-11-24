@@ -22,11 +22,11 @@ $urlPendientes = "panel.php?" . http_build_query(["estado" => "pendientes"]);
 $urlTerminadas = "panel.php?" . http_build_query(["estado" => "terminadas"]);
 $urlLimpiar = "panel.php?" . http_build_query(["estado" => $estado]);
 
-$stmt = $conexion->prepare("SELECT SUM(completada = 0) AS pendientes, SUM(completada = 1) AS terminadas FROM tareas WHERE usuario_id = ?");
-$stmt->bind_param("i", $usuarioId);
-$stmt->execute();
-$contadores = $stmt->get_result()->fetch_assoc();
-$stmt->close();
+$consulta = $conexion->prepare("SELECT SUM(completada = 0) AS pendientes, SUM(completada = 1) AS terminadas FROM tareas WHERE usuario_id = ?");
+$consulta->bind_param("i", $usuarioId);
+$consulta->execute();
+$contadores = $consulta->get_result()->fetch_assoc();
+$consulta->close();
 $pendientes = (int) $contadores["pendientes"];
 $terminadas = (int) $contadores["terminadas"];
 
@@ -39,10 +39,10 @@ $resultadoCategorias->free();
 
 $completada = $estado === "terminadas" ? 1 : 0;
 $termino = "%$buscar%";
-$stmt = $conexion->prepare("SELECT t.id, t.titulo, t.descripcion, t.categoria_id, t.completada, c.nombre AS categoria, c.color AS categoria_color FROM tareas t LEFT JOIN categorias c ON c.id = t.categoria_id WHERE t.usuario_id = ? AND (? = '' OR t.titulo LIKE ? OR t.descripcion LIKE ?) AND (? = 0 OR t.categoria_id = ?) AND t.completada = ? ORDER BY t.creado_en DESC");
-$stmt->bind_param("isssiii", $usuarioId, $buscar, $termino, $termino, $categoria, $categoria, $completada);
-$stmt->execute();
-$resultadoTareas = $stmt->get_result();
+$consulta = $conexion->prepare("SELECT t.id, t.titulo, t.descripcion, t.categoria_id, t.completada, c.nombre AS categoria, c.color AS categoria_color FROM tareas t LEFT JOIN categorias c ON c.id = t.categoria_id WHERE t.usuario_id = ? AND (? = '' OR t.titulo LIKE ? OR t.descripcion LIKE ?) AND (? = 0 OR t.categoria_id = ?) AND t.completada = ? ORDER BY t.creado_en DESC");
+$consulta->bind_param("isssiii", $usuarioId, $buscar, $termino, $termino, $categoria, $categoria, $completada);
+$consulta->execute();
+$resultadoTareas = $consulta->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -175,7 +175,7 @@ $resultadoTareas = $stmt->get_result();
     </div>
 <?php
 $resultadoTareas->free();
-$stmt->close();
+$consulta->close();
 $conexion->close();
 ?>
     <script>
