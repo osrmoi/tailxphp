@@ -39,7 +39,7 @@ $resultadoCategorias->free();
 
 $completada = $estado === "terminadas" ? 1 : 0;
 $termino = "%$buscar%";
-$consulta = $conexion->prepare("SELECT t.id, t.titulo, t.descripcion, t.categoria_id, t.completada, c.nombre AS categoria, c.color AS categoria_color FROM tareas t LEFT JOIN categorias c ON c.id = t.categoria_id WHERE t.usuario_id = ? AND (? = '' OR t.titulo LIKE ? OR t.descripcion LIKE ?) AND (? = 0 OR t.categoria_id = ?) AND t.completada = ? ORDER BY t.creado_en DESC");
+$consulta = $conexion->prepare("SELECT t.id, t.titulo, t.descripcion, t.categoria_id, t.completada, c.nombre AS categoria, c.color AS categoria_color, c.descripcion AS categoria_descripcion FROM tareas t LEFT JOIN categorias c ON c.id = t.categoria_id WHERE t.usuario_id = ? AND (? = '' OR t.titulo LIKE ? OR t.descripcion LIKE ?) AND (? = 0 OR t.categoria_id = ?) AND t.completada = ? ORDER BY t.creado_en DESC");
 $consulta->bind_param("isssiii", $usuarioId, $buscar, $termino, $termino, $categoria, $categoria, $completada);
 $consulta->execute();
 $resultadoTareas = $consulta->get_result();
@@ -146,7 +146,7 @@ $resultadoTareas = $consulta->get_result();
                                     <p class="mt-1 text-sm text-slate-600 line-clamp-2"><?= h($tarea["descripcion"]) ?></p>
                                 <?php endif; ?>
                                 <?php if ($tarea["categoria"] !== null): ?>
-                                    <span class="mt-2 inline-block rounded-full px-2 py-1 text-xs" style="background-color: <?= h($tarea["categoria_color"]) ?>; color: #fff"><?= h($tarea["categoria"]) ?></span>
+                                    <span class="mt-2 inline-block rounded-full px-2 py-1 text-xs" title="<?= h($tarea["categoria_descripcion"]) ?>" style="background-color: <?= h($tarea["categoria_color"]) ?>; color: #fff"><?= h($tarea["categoria"]) ?></span>
                                 <?php endif; ?>
                             </a>
                             <form method="POST" action="acciones.php" class="shrink-0">
