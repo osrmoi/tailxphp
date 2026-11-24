@@ -354,17 +354,7 @@ El operador `+` de arrays añade `editar` sin sobrescribir las claves existentes
 
 ---
 
-## 13. Cosas deliberadamente NO incluidas
-
-- **CRUD de categorías**: son fijas, sembradas. Agregar categorías personalizadas exigiría modificar el SQL (columna `usuario_id` en `categorias`), un módulo CRUD y filtrar por dueño (`usuario_id IS NULL OR usuario_id = ?`).
-- **Cookie del filtro de categoría**: se eliminó; el filtro siempre arranca limpio.
-- **Tema claro/oscuro**: descartado desde el inicio.
-- **Auto-login**: la cookie solo prellena el usuario, nunca autentica.
-- **Recarga parcial / SPA**: cambiar de pestaña hace una petición GET y recarga la página. Es simple, mantiene URLs compartibles y hace que el botón Atrás funcione sin código extra.
-
----
-
-## 14. Verificación
+## 13. Verificación
 
 Chequeo de sintaxis (XAMPP):
 
