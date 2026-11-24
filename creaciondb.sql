@@ -1,3 +1,5 @@
+-- Este script crea la base de datos y las tablas necesarias para la aplicación de lista de tareas.
+-- Se ejecuta una sola vez para configurar la base de datos inicial. En localhost/phpmyadmin, se puede ejecutar directamente desde la pestaña SQL.
 CREATE DATABASE IF NOT EXISTS lista
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_general_ci;
