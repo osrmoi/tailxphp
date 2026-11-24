@@ -46,14 +46,14 @@ pagina/
 1. Tener Apache y MySQL corriendo (XAMPP).
 2. Ejecutar `creaciondb.sql` (por phpMyAdmin o `mysql < creaciondb.sql`). Crea la BD `lista` y las tablas `usuarios`, `categorias` y `tareas`.
 3. Abrir en el navegador `http://localhost/proyecto/pagina/seeder.php`. Siembra 9 categorías y 2 usuarios de prueba.
-4. Ir a `http://localhost/proyecto/pagina/index.php` y entrar con `user1` / `1234` (o `user2` / `1234`).
+4. Ir a `http://localhost/proyecto/pagina/index.php` y entrar con `user1` / `12341234` (o `user2` / `12341234`).
 
 ### Usuarios de prueba
 
 | Usuario | Contraseña |
 | --- | --- |
-| `user1` | `1234` |
-| `user2` | `1234` |
+| `user1` | `12341234` |
+| `user2` | `12341234` |
 
 La contraseña se guarda **hasheada** con `password_hash($password, PASSWORD_DEFAULT)` y se verifica con `password_verify()`. Nunca se guarda en texto plano, ni en la BD, ni en la sesión, ni en cookies.
 
@@ -132,9 +132,10 @@ Crea la variable `$conexion` que usan todos los archivos. `set_charset("utf8mb4"
 Formulario con usuario, contraseña y confirmación. Validaciones en servidor:
 
 1. Ningún campo vacío.
-2. `$password === $confirmacion` (no se confía en el `required` del HTML).
-3. `SELECT id FROM usuarios WHERE usuario = ?` para detectar duplicados (la columna además es UNIQUE).
-4. `INSERT` con `password_hash()`.
+2. Mínimo 8 caracteres (`strlen($password) < 8`). El formulario también lleva `minlength="8"`, pero la validación real es esta.
+3. `$password === $confirmacion` (no se confía en el `required` del HTML).
+4. `SELECT id FROM usuarios WHERE usuario = ?` para detectar duplicados (la columna además es UNIQUE).
+5. `INSERT` con `password_hash()`.
 
 Si todo sale bien: `redirect("index.php?registro=ok")`, es decir, **vuelve al login** y muestra un mensaje verde. `index.php:20` lee `$_GET['registro']` para pintarlo. Si hay errores, se muestran en rojo en el propio `registro.php`.
 
@@ -369,7 +370,7 @@ C:\xampp\php\php.exe -l C:\xampp\htdocs\proyecto\pagina\seeder.php
 Pruebas manuales sugeridas:
 
 1. Registrar un usuario → vuelve al login con mensaje verde.
-2. Login `user1` / `1234`; ver saludo "Hola, user1" y contador de pendientes.
+2. Login `user1` / `12341234`; ver saludo "Hola, user1" y contador de pendientes.
 3. Crear tarea con el botón `+`; ver badge y borde con el color de la categoría.
 4. Buscar por título y por descripción con el mismo input.
 5. Clic en el texto de una tarea → edición inline; Guardar y Cancelar.

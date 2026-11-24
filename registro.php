@@ -18,6 +18,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($usuario === "" || $password === "" || $confirmacion === "") {
         $mensaje = "Todos los campos son obligatorios.";
 
+    // Mínimo 8 caracteres.
+    } elseif (strlen($password) < 8) {
+        $mensaje = "La contraseña debe tener al menos 8 caracteres.";
+
     // La confirmación debe coincidir.
     } elseif ($password !== $confirmacion) {
         $mensaje = "Las contraseñas no coinciden.";
@@ -78,10 +82,10 @@ $conexion->close();
                 <input type="text" name="usuario" value="<?= h($usuario) ?>" class="mt-1 w-full rounded border border-slate-300 px-3 py-2" required>
             </label>
             <label class="mt-4 block text-sm font-medium">Contraseña
-                <input type="password" name="password" class="mt-1 w-full rounded border border-slate-300 px-3 py-2" required>
+                <input type="password" name="password" class="mt-1 w-full rounded border border-slate-300 px-3 py-2" minlength="8" required>
             </label>
             <label class="mt-4 block text-sm font-medium">Confirmación de contraseña
-                <input type="password" name="confirmacion" class="mt-1 w-full rounded border border-slate-300 px-3 py-2" required>
+                <input type="password" name="confirmacion" class="mt-1 w-full rounded border border-slate-300 px-3 py-2" minlength="8" required>
             </label>
             <button type="submit" class="mt-6 w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">Registrarse</button>
         </form>
